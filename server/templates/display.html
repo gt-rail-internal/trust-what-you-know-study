@@ -1,0 +1,100 @@
+<html>
+    <head>
+        <title>Fetch Display Panel</title>
+        <meta charset="UTF-8">
+        <meta name="author" content="Jack Kolb">
+    </head>
+
+    <!-- import the Roboto font -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap" rel="stylesheet"> 
+
+    <!-- import the style CSS -->
+    <link rel="stylesheet" href="{{url_for('static', filename='css/styles.css')}}">
+
+    <body>
+        <div class="main">
+            <div class="content-container" style="flex-grow: 0;">
+                <div class="title">
+                    Fetch Display Panel
+                </div>
+                <div id="score" class="title">
+                    Score: 0
+                </div>
+            </div>
+            <div class="content-container" style="flex-grow: 1;">
+                <div class="image">
+                    <img id="puzzle">
+                </div>
+                <div id="progress" class="progress">
+                    <div></div>
+                    <div id="loader" class="loader"></div>
+                    <div id="progress-text" class="progress-text">Initializing...</div>
+                </div>
+            </div>
+        </div>
+    </body>
+
+    <script>
+        var state = -1;  // 0 = waiting for task, 1 = doing task, 2 = completed task
+        var puzzle = -1;  // ID of the puzzle
+        var score = 0;
+
+        let progressDiv = document.getElementById("progress")
+        let progressText = document.getElementById("progress-text");
+        let loader = document.getElementById("loader")
+
+        function startLoading() {
+            loader.style.display = "block";
+        }
+
+        function setLoadingWaiting() {
+            loader.style.animation = "spin 1.5s linear infinite";
+            loader.style.borderTop = "1vw solid #3468db;"
+            progressText.innerHTML = "Waiting for task...";
+            progressDiv.style.backgroundColor = "gainsboro";
+        }
+
+        function setLoadingThinking() {
+            loader.style.animation = "reverse-spin .9s linear infinite";
+            loader.style.borderTop = "1vw solid #db68db";
+            progressText.innerHTML = "Solving problem...";
+            progressDiv.style.backgroundColor = "gainsboro";
+        }
+
+        function doneThinking() {
+            loader.style.display = "none";
+            progressText.innerHTML = "Task complete!";
+            progressDiv.style.backgroundColor = "palegreen";
+        }
+
+        // regularly pull the current puzzle
+        window.setInterval(() => {
+            // get the current puzzle
+            fetch("/get_puzzle").then(response => response.json()).then((data) => {
+                let result = parseInt(data);  // puzzle responses from the server are in the form 102 where 1 is the puzzle state, and 01 is the puzzle ID
+                puzzle = result % 100;  // puzzle ID
+                state = parseInt(result / 100);
+            });
+            // update the progress panel according to the puzzle state
+            if (state == 0) {
+                setLoadingWaiting();
+            }
+            if (state == 1) {
+                setLoadingThinking();
+            }
+            if (state == 2) {
+                doneThinking();
+            }
+            // update the image panel according to the image
+        }, 100);
+
+        // regularly pull the current score
+        window.setInterval(() => {
+            // get the current score
+            fetch("/get_score").then(response => response.json()).then((data) => {
+                score = parseInt(data);  // get the score
+                document.getElementById("score").innerHTML = "Score: " + score;
+            });
+        })
+    </script>
+</html>
