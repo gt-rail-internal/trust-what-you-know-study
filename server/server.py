@@ -3,7 +3,7 @@ from flask import Flask, render_template, request
 app = Flask(__name__)
 
 puzzle = "100"
-score = "0"
+score = "100"
 
 # route to handle the display page
 @app.route("/", methods=["GET"])
@@ -29,7 +29,7 @@ def get_score():
 
 # route to handle setting the current score
 @app.route("/set_score", methods=["GET"])
-def get_score():
+def set_score():
     global score
     score = request.args.get("score")
     return "success"

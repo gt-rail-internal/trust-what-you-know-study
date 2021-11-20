@@ -49,7 +49,7 @@
 
         function setLoadingWaiting() {
             loader.style.animation = "spin 1.5s linear infinite";
-            loader.style.borderTop = "1vw solid #3468db;"
+            loader.style.borderTop = "1vw solid #3468db";
             progressText.innerHTML = "Waiting for task...";
             progressDiv.style.backgroundColor = "gainsboro";
         }
@@ -67,6 +67,12 @@
             progressDiv.style.backgroundColor = "palegreen";
         }
 
+        function resetBlock() {
+            loader.style.display = "none";
+            progressText.innerHTML = "Initializing..."
+            progressDiv.style.backgroundColor = "gainsboro";
+        }
+
         // regularly pull the current puzzle
         window.setInterval(() => {
             // get the current puzzle
@@ -77,12 +83,18 @@
             });
             // update the progress panel according to the puzzle state
             if (state == 0) {
-                setLoadingWaiting();
+                console.log("reset");
+                resetBlock();
             }
             if (state == 1) {
-                setLoadingThinking();
+                startLoading();
+                setLoadingWaiting();
             }
             if (state == 2) {
+                startLoading();
+                setLoadingThinking();
+            }
+            if (state == 3) {
                 doneThinking();
             }
             // update the image panel according to the image
@@ -95,6 +107,6 @@
                 score = parseInt(data);  // get the score
                 document.getElementById("score").innerHTML = "Score: " + score;
             });
-        })
+        }, 100)
     </script>
 </html>
