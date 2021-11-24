@@ -15,7 +15,7 @@ def index():
 def get_puzzle():
     return str(puzzle)
 
-# route to handle setting the current puzzle, uses the form 102 where 1 is the state (0=waiting, 1=thinking, 2=complete) and 02 is the puzzle ID
+# route to handle setting the current puzzle, uses the form 102 where 1 is the state (1=waiting, 2=thinking, 3=complete) and 02 is the puzzle ID
 @app.route("/set_puzzle", methods=["GET"])
 def set_puzzle():
     global puzzle

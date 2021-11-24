@@ -1,7 +1,7 @@
 # Image rostopic can be used to retrieve image 
 
-image_topic: 'img'
+image_topic: '/head_camera/rgb/image_raw'
 
-marker_ids: [55, 72, 150]
-marker_length: 0.1
+marker_ids: [0, 10, 11, 12, 13, 14, 15]
+marker_length: 0.7
 marker_dict: cv2.aruco.DICT_5X5_250

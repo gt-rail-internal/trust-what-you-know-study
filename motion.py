@@ -14,12 +14,18 @@ import control_msgs.msg
 from moveit_msgs.msg import MoveItErrorCodes
 from moveit_python import MoveGroupInterface, PlanningSceneInterface
 
-moveit_commander.roscpp_initialize("")
-robot = moveit_commander.RobotCommander()
-scene = moveit_commander.PlanningSceneInterface()
+robot = None
+scene = None
 
 group_name = "arm_with_torso"
-move_group_ik = moveit_commander.MoveGroupCommander(group_name)
+move_group_ik = None
+
+# initializes MoveIt for the arm and torso
+def initialize_motion():
+    moveit_commander.roscpp_initialize("")  # init the MoveIt commander
+    robot = moveit_commander.RobotCommander()  # init the robot
+    scene = moveit_commander.PlanningSceneInterface()  # init the planning scene
+    move_group_ik = moveit_commander.MoveGroupCommander(group_name)  # init the inverse kinematics
 
 # connect to the gripper controller client
 client = actionlib.SimpleActionClient('gripper_controller', control_msgs.msg.GripperCommandAction)
