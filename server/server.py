@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request
+import study_controller
 
 app = Flask(__name__)
 
@@ -34,6 +35,22 @@ def set_score():
     score = request.args.get("score")
     return "success"
 
+# route for admin control of Fetch
+@app.route("/control", methods=["GET"])
+def admin_control():
+    action = request.args.get("action")  # get the action
+    if action is None:  # is no action was provided, return
+        return "missiong 'action' parameter"
+    
+    # action: reset Fetch to the init position (defined in study_controller.py)
+    if action == "reset":
+        study_controller.init_arm()
+    return "success"
+
+# route to display the admin control page
+@app.route("/admin", methods=["GET"])
+def admin_webpage():
+    return render_template("admin.html")
 
 # start the server
 app.run(port=5003)
