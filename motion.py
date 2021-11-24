@@ -20,15 +20,15 @@ scene = None
 group_name = "arm_with_torso"
 move_group_ik = None
 
+# connect to the gripper controller client
+client = actionlib.SimpleActionClient('gripper_controller', control_msgs.msg.GripperCommandAction)
+
 # initializes MoveIt for the arm and torso
 def initialize_motion():
     moveit_commander.roscpp_initialize("")  # init the MoveIt commander
     robot = moveit_commander.RobotCommander()  # init the robot
     scene = moveit_commander.PlanningSceneInterface()  # init the planning scene
     move_group_ik = moveit_commander.MoveGroupCommander(group_name)  # init the inverse kinematics
-
-# connect to the gripper controller client
-client = actionlib.SimpleActionClient('gripper_controller', control_msgs.msg.GripperCommandAction)
 
 def move_arm_joints(joints):
     move_group_joints = MoveGroupInterface("arm_with_torso", "base_link")

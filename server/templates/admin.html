@@ -1,7 +1,81 @@
 <html>
+    <head>
+        <title>Fetch Admin Panel</title>
+        <meta charset="UTF-8">
+        <meta name="author" content="Jack Kolb">
+    </head>
+
+    <!-- import the Roboto font -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap" rel="stylesheet"> 
+
+    <!-- import the style CSS -->
+    <link rel="stylesheet" href="{{url_for('static', filename='css/styles.css')}}">
 
     <body>
-        Test test admin    
+        <div class="main">
+            <div class="title">
+                Fetch Admin Control Panel
+            </div>
+
+            <div id="markers" class="content"></div>
+
+            <div id="score" class="content"></div>
+
+            <div id="reset-flag" class="content"></div>
+
+            <div id="reset-button" onclick="resetFetch()" class="button" style="background-color: palevioletred;">
+                RESET
+            </div>
+
+            <div id="cycle-button" onclick="cycleMarkers()" class="button" style="background-color: palegoldenrod;">
+                CYCLE
+            </div>
+        </div>
     </body>
+
+    <script>
+        // reset the robot to the initial arm position
+        function resetFetch() {
+            console.log("Reset Fetch");
+            fetch("/control?action=reset")
+        }
+
+        // cycle through the markers
+        function cycleMarkers() {
+            console.log("Cycle Markers");
+            fetch("/control?action=cycle")
+        }
+
+        // unreset the robot
+        function unresetFetch() {
+            console.log("Unreset Fetch");
+            fetch("/control?action=unreset")
+        }
+
+        // regularly pull the visible markers
+        window.setInterval(() => {
+            fetch("/get_markers").then(response => response.json()).then((data) => {
+                document.getElementById("markers").innerHTML = "Markers (" + data.length + "): " + data;
+            });
+        }, 1000)
+
+        // regularly pull the current score
+        window.setInterval(() => {
+            // get the current score
+            fetch("/get_score").then(response => response.json()).then((data) => {
+                score = parseInt(data);  // get the score
+                document.getElementById("score").innerHTML = "Score: " + score;
+            });
+        }, 100)
+
+        // regularly pull the reset flag
+        window.setInterval(() => {
+            // get the current score
+            fetch("/get_reset_flag").then(response => response.json()).then((data) => {
+                document.getElementById("reset-flag").innerHTML = "Reset Flag: " + data;
+            });
+        }, 100)
+
+    </script>
 </html>
 

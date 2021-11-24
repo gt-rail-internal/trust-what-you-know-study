@@ -11,8 +11,10 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import String
 from std_msgs.msg import Int32MultiArray
 from cv_bridge import CvBridge, CvBridgeError
+import requests
 
 class ArucoMarker:
+
     def __init__(self, params):
         self.params = params
 
@@ -22,19 +24,36 @@ class ArucoMarker:
         self.arucoParams = cv2.aruco.DetectorParameters_create()
         self.bridge = CvBridge()
 
+    def join(self, a, delim):
+        if len(a) == 0:
+            return
+        string = str(a[0])
+        for i in a[1:]:
+            string += str(delim) + str(i)
+        return string
+
     def detect(self, cv2_img):
         H, W, _ = cv2_img.shape
 
         # Detect markers from image using CV2
         (corners, tracked_ids, _) = cv2.aruco.detectMarkers(cv2_img, self.arucoDict)
-
+        
         # if no markers were found, return empty array
         if tracked_ids is None or len(corners) != 10:
             if tracked_ids is None:
                 print("no tags seen")
+                server_result = []
             else:
                 print("only see", len(tracked_ids), "tags")
+                server_result = [x[0] for x in tracked_ids.tolist()]
+            # publish the data to the server
+            _ = requests.get("http://localhost:5000/set_markers", params={"markers": self.join(server_result, ',')})
             return []
+
+        # publish the data to the server
+        server_result = [x[0] for x in tracked_ids.tolist()]
+        _ = requests.get("http://localhost:5000/set_markers", params={"markers": self.join(server_result, ',')})
+
 
         # For each corner, first value is y measured from left to right and 
         # second value is x measured top to bottom
@@ -97,7 +116,7 @@ def main():
             marker_data = Int32MultiArray()
             marker_data.data = result
             # publish the data to the /markers topic
-            markers_publisher.publish(marker_data)
+            markers_publisher.publish(marker_data)           
 
     rospy.spin()
 
