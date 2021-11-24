@@ -47,6 +47,13 @@
             loader.style.display = "block";
         }
 
+        function setInitializing() {
+            loader.style.animation = "spin 1.5s linear infinite";
+            loader.style.borderTop = "1vw solid #34db68";
+            progressText.innerHTML = "Initializing Fetch...";
+            progressDiv.style.backgroundColor = "gainsboro";
+        }
+
         function setLoadingWaiting() {
             loader.style.animation = "spin 1.5s linear infinite";
             loader.style.borderTop = "1vw solid #3468db";
@@ -54,14 +61,28 @@
             progressDiv.style.backgroundColor = "gainsboro";
         }
 
-        function setLoadingThinking() {
-            loader.style.animation = "reverse-spin .9s linear infinite";
-            loader.style.borderTop = "1vw solid #db68db";
-            progressText.innerHTML = "Solving problem...";
+        function setLoadingReading() {
+            loader.style.animation = "spin 1.5s linear infinite";
+            loader.style.borderTop = "1vw solid #3468db";
+            progressText.innerHTML = "Reading task...";
             progressDiv.style.backgroundColor = "gainsboro";
         }
 
-        function doneThinking() {
+        function setLoadingThinking() {
+            loader.style.animation = "reverse-spin .9s linear infinite";
+            loader.style.borderTop = "1vw solid #db68db";
+            progressText.innerHTML = "Solving task...";
+            progressDiv.style.backgroundColor = "gainsboro";
+        }
+
+        function setLoadingMoving() {
+            loader.style.animation = "reverse-spin .9s linear infinite";
+            loader.style.borderTop = "1vw solid #db68db";
+            progressText.innerHTML = "Moving to task...";
+            progressDiv.style.backgroundColor = "gainsboro";
+        }
+
+        function setFoundSolution() {
             loader.style.display = "none";
             progressText.innerHTML = "Task complete!";
             progressDiv.style.backgroundColor = "palegreen";
@@ -72,6 +93,8 @@
             progressText.innerHTML = "Initializing..."
             progressDiv.style.backgroundColor = "gainsboro";
         }
+
+        setInitializing();
 
         // regularly pull the current puzzle
         window.setInterval(() => {
@@ -88,14 +111,26 @@
             }
             if (state == 1) {
                 startLoading();
-                setLoadingWaiting();
+                setLoadingReading();
             }
             if (state == 2) {
                 startLoading();
                 setLoadingThinking();
             }
             if (state == 3) {
-                doneThinking();
+                setFoundSolution();
+            }
+            if (state == 4) {
+                startLoading();
+                setLoadingMoving();
+            }
+            if (state == 5) {
+                startLoading();
+                setLoadingWaiting();
+            }
+            if (state == 6) {
+                startLoading();
+                setInitializing();
             }
             // update the image panel according to the image
         }, 100);
