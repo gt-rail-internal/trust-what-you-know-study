@@ -5,19 +5,21 @@ import math
 from std_msgs.msg import Int32MultiArray, String
 import time
 import requests
-import motion
 from datetime import datetime
+import motion
 
 """
 RUNNING THE SYSTEM
 0. Make sure the robot.profile is sourced in your ~/.bashrc, this connects to the Fetch ROS nodes
 1. Run the Fetch moveit ON THE FETCH
     $> roslaunch fetch_moveit_config move_group.launch
-2. Run the marker detection node (python3 should work too)
+2. Run the marker detection node (python3 should work too if you update ROS to Noetic+)
     $> python2 marker_detection.py
-3. Run the webserver (python3 should work too)
+2a. If you want to see the Fetch's camera feed
+    $> rosrun image_view image_view image:=/head_camera/rgb/image_raw
+3. Run the webserver (python3 should work too if you update ROS to Noetic+)
     $> python2 server/server.py
-4. Run the study controller ON YOUR COMPUTER (or the Fetch) (python3 should work too)
+4. Run the study controller ON YOUR COMPUTER (or the Fetch) (python3 should work too if you update ROS to Noetic+)
     $> python2 study_controller.py
     Running the above will also launch the server, at server/server.py
 
@@ -48,9 +50,9 @@ joint_table = {
     #"home": [2.9771828651428223, -0.8701348869287109, -0.7354901095747559, 0.538868738205719, 1.7005119510925293, 2.56561325965271, 0, 0]
 }
 
-score = 0
-
 def init_arm():
+    # set the state to resetting arm
+    send_state("resetting arm")
     # init back right near the 0,0
     #joints = [2.9803242683410645, -1.5093436805688476, -0.4041502734541504, -1.129718886820984,-1.4648575595581055, 1.9692782062088012, 2.017528761517334, 0.6389203225610351]
     
@@ -67,28 +69,32 @@ def move_to_point(row, col):
     y = (col) * .1 - .3
     x = (row) * .2 + .3
     res = motion.move_arm_ik(x, y, table_height, 0, 1/2**0.5, 0, 1/2**0.5)
-    print(type(res), res)
-
-
+    
 # gradually sleep and update score
 def sleep_score(seconds):
-    global score
     while seconds > 1:
         time.sleep(1)
-        score += 1
-        requests.get("http://localhost:" + port + "/set_score", params={"score": score})
+        try:
+            requests.get("http://localhost:" + port + "/add_score", params={"score": 1})
+        except requests.exceptions.ConnectionError:
+                pass
         seconds -= 1
     time.sleep(seconds)
-    score += seconds
-    requests.get("http://localhost:" + port + "/set_score", params={"score": score})
+    try:
+        requests.get("http://localhost:" + port + "/add_score", params={"score": seconds})
+    except requests.exceptions.ConnectionError:
+        pass
     return
 
 
 # cycle_markers(): visits each marker that isn't 0, and runs the corresponding display/wait functions
 def cycle_markers(markers):
     # set the default task to "waiting for task"
-    requests.get("http://localhost:" + port + "/set_puzzle", params={"puzzle": "500"})
-    
+    try:
+        requests.get("http://localhost:" + port + "/set_puzzle", params={"puzzle": "500"})
+    except requests.exceptions.ConnectionError:
+        pass
+
     # visit each marker
     row = 0
     col = 0
@@ -99,8 +105,11 @@ def cycle_markers(markers):
             # if the marker is not 0, go to that marker
             if markers[index] != 0:
                 # move to the marker
-                print("moving to marker", row, col, "cardID", markers[index])
-                requests.get("http://localhost:" + port + "/set_puzzle", params={"puzzle": "4" + str(markers[index])})
+                try:
+                    requests.get("http://localhost:" + port + "/set_puzzle", params={"puzzle": "4" + str(markers[index])})
+                except requests.exceptions.ConnectionError:
+                    pass
+
                 if flag_force_reset:
                     return
                 motion.move_arm_joints(joint_table[str(row)][str(col)])
@@ -110,63 +119,104 @@ def cycle_markers(markers):
                 #time.sleep(2)
 
                 # "think" of the solution
-                requests.get("http://localhost:" + port + "/set_puzzle", params={"puzzle": "2" + str(markers[index])})
+                try:
+                    requests.get("http://localhost:" + port + "/set_puzzle", params={"puzzle": "2" + str(markers[index])})
+                except requests.exceptions.ConnectionError:
+                    pass
                 if flag_force_reset:
                     return
                 sleep_score(5)
                 
 
                 # complete!
-                requests.get("http://localhost:" + port + "/set_puzzle", params={"puzzle": "3" + str(markers[index])})
+                try:
+                    requests.get("http://localhost:" + port + "/set_puzzle", params={"puzzle": "3" + str(markers[index])})
+                except requests.exceptions.ConnectionError:
+                    pass
                 if flag_force_reset:
                     return
                 time.sleep(1)
                 
             else:
-                print("skipping over marker", row, col)
+                pass
             index += 1
+    # increment the roumd
+    try:
+        requests.get("http://localhost:" + port + "/set_round", params={"round": "+"})
+    except requests.exceptions.ConnectionError:
+        pass
     return
 
 
 # admin_control(): handler for the admin control ROS topic, used for our admin control interface
 def admin_control(data):
+    global flag_force_reset
     command = data.data
 
     # reset the arm
     if command == "reset":
-        global flag_force_reset
         flag_force_reset = True
-        print("resetting flag")
-        requests.get("http://localhost:" + port + "/set_reset_flag", params={"reset_flag": "true"})
+        try:
+            requests.get("http://localhost:" + port + "/set_reset_flag", params={"reset_flag": "true"})
+        except requests.exceptions.ConnectionError:
+            pass
         init_arm()
 
     # unreset the arm
     if command == "unreset":
-        global flag_force_reset
         flag_force_reset = False
-        print("unresetting flag")
-        requests.get("http://localhost:" + port + "/set_reset_flag", params={"reset_flag": "false"})
+        try:
+            requests.get("http://localhost:" + port + "/set_reset_flag", params={"reset_flag": "false"})
+        except requests.exceptions.ConnectionError:
+            pass
 
     # run a marker cycle
     if command == "cycle":
+        # set the state to waiting for markers
+        send_state("waiting to see 10 markers")
         # snapshot the markers
         markers = rospy.wait_for_message("/markers", Int32MultiArray).data
+        # set the state to cycling
+        send_state("cycling through markers")
         # cycle through the markers
         cycle_markers(markers)
         # return to the init position
         init_arm()
+    
+    # set the state to idling
+    send_state("waiting for command")
 
-
-if __name__ == "__main__":    
-    # initialize the ROS node
-    rospy.init_node("study_controller")
+# init the topic subscriber
+def listener():
     rospy.Subscriber("/twyk_admin", String, admin_control)
 
+# send_state(): tells the server what state the robot is it
+def send_state(state):
+    try:    
+        requests.get("http://localhost:" + port + "/set_state", params={"state": state})
+    except requests.exceptions.ConnectionError:
+        pass
+
+if __name__ == "__main__":    
+    # set the state to init
+    send_state("initializing")
+
+    # initialize the ROS node
+    rospy.init_node("twyk_study_controller")
+    listener()
+
     # initialize the motion controller
-    requests.get("http://localhost:" + port + "/set_puzzle", params={"puzzle": "600"})
+    try:
+        requests.get("http://localhost:" + port + "/set_puzzle", params={"puzzle": "600"})
+    except requests.exceptions.ConnectionError:
+        pass
     motion.initialize_motion()
 
     # set to the initial position
     init_arm()
     
+    # spin
+    print("spinning")
+    # set the state to idling
+    send_state("initialized, waiting for command")
     rospy.spin()

@@ -12,70 +12,236 @@
     <link rel="stylesheet" href="{{url_for('static', filename='css/styles.css')}}">
 
     <body>
-        <div class="main">
+        <div class="main" style="justify-content: space-evenly; align-items: center;">
             <div class="title">
                 Fetch Admin Control Panel
             </div>
 
-            <div id="markers" class="content"></div>
+            <div id="marker-table"></div>
 
-            <div id="score" class="content"></div>
+            <div class="content-container" style="margin: 0">
+                <div id="state" class="content"></div>
+                <div id="markers" class="content"></div>
+            </div>
 
-            <div id="reset-flag" class="content"></div>
+            <div class="content-container" style="margin: 0">
+                <div id="new-user-button" onclick="newUser()" class="button" style="background-color: lightgrey;">
+                    NEW USER
+                </div>
 
-            <div id="reset-button" onclick="resetFetch()" class="button" style="background-color: palevioletred;">
-                RESET
+                <div id="userId" class="content"></div>
+                <div id="score" class="content"></div>
+                <div id="round" class="content"></div>
+                <div id="reset-button" onclick="prevRound()" class="button" style="background-color: lightgrey; width: 3vw">
+                    -
+                </div>
+                <div id="reset-button" onclick="nextRound()" class="button" style="background-color: palegoldenrod; width: 3vw">
+                    +
+                </div>
+            </div>
+
+            <div class="content-container" style="margin: 0">
+                <div id="reset-button" onclick="resetFetch()" class="button" style="background-color: lightpink;">
+                    DISABLE FETCH
+                </div>
+
+                <div id="reset-flag" class="flag">OFF</div>
+
+                <div id="reset-button" onclick="unresetFetch()" class="button" style="background-color: paleturquoise;">
+                    ENABLE FETCH
+                </div>
+            </div>
+
+            <div class="content-container" style="margin: 0">
+                <div id="reset-button" onclick="startStopwatch()" class="button" style="background-color: paleturquoise;">
+                    START TIME
+                </div>
+
+                <div id="stopwatch-flag" class="flag">OFF</div>
+
+                <div id="reset-button" onclick="stopStopwatch()" class="button" style="background-color: lightpink;">
+                    STOP TIME
+                </div>
             </div>
 
             <div id="cycle-button" onclick="cycleMarkers()" class="button" style="background-color: palegoldenrod;">
                 CYCLE
             </div>
+
         </div>
     </body>
 
     <script>
+        let stopwatchTime = undefined;  // stopwatch time
+        let score = undefined;  // user score
+        let userId = undefined;  // user ID for logging
+        let round = undefined;  // game round
+
+        fetch("/log?" + new URLSearchParams({"message": "opened admin page"}));
+
+        // input the next USER ID
+        function newUser() {
+            // get the ID and send to the server, the user ID field here will update based on the server (to confirm commands went through)
+            let _userId = prompt("Please enter the new user ID (if clicked accidentally, re-enter the old user ID)", "testuser");
+            fetch("/set_user?user=" + _userId);
+            // if the user ID has changed, reset the score (in case you accidentally click new user)
+            if (_userId != userId) {
+                fetch("/reset_score");
+            }
+            fetch("/log?" + new URLSearchParams({"message": "clicked new user: " + _userId}));
+        }
+
         // reset the robot to the initial arm position
         function resetFetch() {
             console.log("Reset Fetch");
+            fetch("/log?" + new URLSearchParams({message: "clicked reset"}));
             fetch("/control?action=reset")
         }
 
         // cycle through the markers
         function cycleMarkers() {
             console.log("Cycle Markers");
+            fetch("/log?" + new URLSearchParams({"message": "clicked cycle"}));
             fetch("/control?action=cycle")
         }
 
         // unreset the robot
         function unresetFetch() {
             console.log("Unreset Fetch");
+            fetch("/log?" + new URLSearchParams({message: "clicked unreset"}));
             fetch("/control?action=unreset")
+        }
+
+        // move to the next round
+        function nextRound() {
+            console.log("Moving to next round")
+            fetch("/set_round?" + new URLSearchParams({round: "+"}))
+        }
+
+        // move to the previous round
+        function prevRound() {
+            console.log("Moving to previous round")
+            fetch("/set_round?" + new URLSearchParams({round: "-"}))
+        }
+
+        // start the stopwatch {
+        function startStopwatch() {
+            console.log("Starting user timer");
+            stopwatchTime = (new Date()).getTime();
+            document.getElementById("stopwatch-flag").innerHTML = "ON";
+            document.getElementById("stopwatch-flag").style.backgroundColor = "palegreen";
+            fetch("/log?" + new URLSearchParams({"message": "started stopwatch"}));
+        }
+
+        // stop the stopwatch {
+        function stopStopwatch() {
+            console.log("Stopping user timer");
+            stopwatchTime = (new Date()).getTime() - stopwatchTime;
+            // update the score
+            fetch("/add_score?score=" + (stopwatchTime / 1000));
+            document.getElementById("stopwatch-flag").innerHTML = "OFF";
+            document.getElementById("stopwatch-flag").style.backgroundColor = "palevioletred";
+            fetch("/log?" + new URLSearchParams({"message": "stopped stopwatch"}));
         }
 
         // regularly pull the visible markers
         window.setInterval(() => {
             fetch("/get_markers").then(response => response.json()).then((data) => {
-                document.getElementById("markers").innerHTML = "Markers (" + data.length + "): " + data;
+                document.getElementById("markers").innerHTML = "Visible Markers: " + data.length;
             });
-        }, 1000)
+        }, 250)
+
+        // regularly pull the visible markers
+        window.setInterval(() => {
+            fetch("/get_marker_table").then(response => response.json()).then((data) => {
+                marker_table = data;
+                let counter = 0;
+                let cell = undefined;
+                for (let j=4; j>=0; j--) {
+                    for (let i=1; i>=0; i--) {                
+                        cell = document.getElementById("marker-table-cell-" + i + "-" + j);
+                        cell.innerHTML = data[counter]
+                        if (data[counter] == 0) {
+                            cell.classList = "marker-table-cell marker-table-cell-zero";
+                        }
+                        else {
+                            cell.classList = "marker-table-cell marker-table-cell-filled";
+                        }
+                        counter++;
+                    }
+                }
+            });
+        }, 250)
 
         // regularly pull the current score
         window.setInterval(() => {
             // get the current score
             fetch("/get_score").then(response => response.json()).then((data) => {
-                score = parseInt(data);  // get the score
+                score = parseFloat(data);  // get the score
                 document.getElementById("score").innerHTML = "Score: " + score;
             });
-        }, 100)
+        }, 250)
+
+        // regularly pull the current user ID
+        window.setInterval(() => {
+            // get the current user ID
+            fetch("/get_user").then(response => response.json()).then((data) => {
+                userId = data;  // set the global variable
+                document.getElementById("userId").innerHTML = "User: " + userId;
+            });
+        }, 250)
+
+        // regularly pull the current state
+        window.setInterval(() => {
+            // get the current state
+            fetch("/get_state").then(response => response.json()).then((data) => {
+                state = data;  // set the global variable
+                document.getElementById("state").innerHTML = "Fetch State: " + state;
+            });
+        }, 250)
+
+        // regularly pull the current round
+        window.setInterval(() => {
+            // get the current round
+            fetch("/get_round").then(response => response.json()).then((data) => {
+                round = data;  // set the global variable
+                document.getElementById("round").innerHTML = "Round: " + round;
+            });
+        }, 250)
 
         // regularly pull the reset flag
         window.setInterval(() => {
-            // get the current score
+            // get the reset flag state
             fetch("/get_reset_flag").then(response => response.json()).then((data) => {
-                document.getElementById("reset-flag").innerHTML = "Reset Flag: " + data;
+                if (data == true) {
+                    document.getElementById("reset-flag").style.backgroundColor = "palevioletred";
+                    document.getElementById("reset-flag").innerHTML = "OFF";
+                }
+                else {
+                    document.getElementById("reset-flag").style.backgroundColor = "palegreen";
+                    document.getElementById("reset-flag").innerHTML = "ON";
+                }
             });
-        }, 100)
+        }, 250)
 
+        // generates the marker table
+        function generateMarkerTable() {
+            let table = document.createElement("table")
+            table.classList = "marker-table";
+
+            for (let i=0; i<2; i++) {
+                let tr = table.insertRow();
+                for (let j=0; j<5; j++) {
+                    td = tr.insertCell();
+                    td.classList = "marker-table-cell";
+                    td.id = "marker-table-cell-" + i + "-" + j;
+                    td.innerHTML = "0"
+                }
+            }
+            document.getElementById("marker-table").appendChild(table);
+        }
+
+        generateMarkerTable();
     </script>
 </html>
 

@@ -41,19 +41,24 @@ class ArucoMarker:
         # if no markers were found, return empty array
         if tracked_ids is None or len(corners) != 10:
             if tracked_ids is None:
-                print("no tags seen")
+                print("No tracked IDs found")
                 server_result = []
             else:
-                print("only see", len(tracked_ids), "tags")
+                print "Only " + str(len(tracked_ids.tolist())) + " IDs found"
                 server_result = [x[0] for x in tracked_ids.tolist()]
             # publish the data to the server
-            _ = requests.get("http://localhost:5000/set_markers", params={"markers": self.join(server_result, ',')})
+            try:
+                requests.get("http://localhost:5000/set_markers", params={"markers": self.join(server_result, ',')})
+            except requests.exceptions.ConnectionError:
+                pass
             return []
 
         # publish the data to the server
         server_result = [x[0] for x in tracked_ids.tolist()]
-        _ = requests.get("http://localhost:5000/set_markers", params={"markers": self.join(server_result, ',')})
-
+        try:
+            requests.get("http://localhost:5000/set_markers", params={"markers": self.join(server_result, ',')})
+        except requests.exceptions.ConnectionError:
+            pass
 
         # For each corner, first value is y measured from left to right and 
         # second value is x measured top to bottom
@@ -65,7 +70,7 @@ class ArucoMarker:
             if arid in self.params['marker_ids']:
                 corner_coord = c[0, 0]  # corner_coord[0] is x, corner_coord[1] is y
                 marker_tuples.append((arid[0], corner_coord[0], corner_coord[1]))
-               
+
         # sorting function
         mean_y = sum([x[2] for x in marker_tuples]) / len(marker_tuples)  # get the mean y value
         upper_row = [x for x in marker_tuples if x[2] > mean_y]  # split items into upper and lower rows
@@ -74,6 +79,10 @@ class ArucoMarker:
         # sort both by x
         upper_row.sort(key = lambda x: x[1])
         lower_row.sort(key = lambda x: x[1])
+        
+        if len(upper_row) != len(lower_row):
+            print "Upper row has " + str(len(upper_row)) + " while lower row has " + str(len(lower_row))
+            return []
         
         # combine the lists elementwise
         result = []
@@ -116,7 +125,8 @@ def main():
             marker_data = Int32MultiArray()
             marker_data.data = result
             # publish the data to the /markers topic
-            markers_publisher.publish(marker_data)           
+            markers_publisher.publish(marker_data)      
+            print("Publishing to markers")
 
     rospy.spin()
 

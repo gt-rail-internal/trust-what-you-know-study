@@ -79,6 +79,18 @@ div.button {
     height: 5vh;
     line-height: 5vh;
     text-align: center;
+    font-weight: bold;
+}
+
+div.flag {
+    background-color: lightgrey;
+    font-size: 20pt;
+    margin: 1vh;
+    width: 5vw;
+    height: 5vh;
+    line-height: 5vh;
+    text-align: center;
+    font-weight: bold;
 }
 
 div.button:hover {
@@ -86,7 +98,7 @@ div.button:hover {
 }
 
 div.button:active:hover {
-    background-color: lightgray;
+    font-weight:100;
     box-shadow: 0 0 0 black;
 }
 
@@ -98,4 +110,21 @@ div.button:active:hover {
 @keyframes reverse-spin {
     0% { transform: rotate(360deg); }
     100% { transform: rotate(0deg); }
+}
+
+/* marker table */
+table.marker-table {
+    font-size: 20pt;
+}
+
+td.marker-table-cell {
+    padding: 3vh;
+}
+
+td.marker-table-cell-zero {
+    background-color: lightgray;
+}
+
+td.marker-table-cell-filled {
+    background-color: lightskyblue;
 }
