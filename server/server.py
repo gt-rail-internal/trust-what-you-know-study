@@ -18,7 +18,7 @@ flag_force_reset = False  # flag for whether Fetch is in reset mode, when True s
 game_round = 0  # flag for the game round
 
 # publisher for admin action
-#admin_publisher = rospy.Publisher("/twyk_admin", String, queue_size=10)
+admin_publisher = rospy.Publisher("/twyk_admin", String, queue_size=10)
 
 # route to handle the display page
 @app.route("/", methods=["GET"])
