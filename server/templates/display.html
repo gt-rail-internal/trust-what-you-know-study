@@ -23,7 +23,7 @@
             </div>
             <div class="content-container" style="flex-grow: 1;">
                 <div class="image">
-                    <img id="puzzle">
+                    <img id="puzzle" style="max-width: 100%; max-height: 100%;">
                 </div>
                 <div id="progress" class="progress">
                     <div></div>
@@ -73,6 +73,7 @@
             loader.style.borderTop = "1vw solid #db68db";
             progressText.innerHTML = "Solving task...";
             progressDiv.style.backgroundColor = "gainsboro";
+            setImage(puzzle);  // set the display image to the puzzle image
         }
 
         function setLoadingMoving() {
@@ -86,12 +87,17 @@
             loader.style.display = "none";
             progressText.innerHTML = "Task complete!";
             progressDiv.style.backgroundColor = "palegreen";
+            setImage(puzzle + "_s");  // set the display image to the puzzle solution image
         }
 
         function resetBlock() {
             loader.style.display = "none";
             progressText.innerHTML = "Initializing..."
             progressDiv.style.backgroundColor = "gainsboro";
+        }
+
+        function setImage(img_id) {
+            document.getElementById("puzzle").setAttribute("src", "static/img/hf_" + img_id + ".png")
         }
 
         setInitializing();
