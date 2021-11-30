@@ -11,7 +11,7 @@ markers = ""
 flag_force_reset = False
 
 # publisher for admin action
-admin_publisher = rospy.Publisher("/twyk_admin", String, queue_size=10)
+#admin_publisher = rospy.Publisher("/twyk_admin", String, queue_size=10)
 
 # route to handle the display page
 @app.route("/", methods=["GET"])
@@ -99,6 +99,6 @@ def admin_webpage():
     return render_template("admin.html")
 
 # start the server
-rospy.init_node('twyk_server')
+#rospy.init_node('twyk_server')
 app.run(port=5000)
-rospy.spin()
+#rospy.spin()
