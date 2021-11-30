@@ -35,18 +35,20 @@
     </body>
 
     <script>
-        var state = -1;  // 0 = waiting for task, 1 = doing task, 2 = completed task
+        var state = -1;  // robot state, see the if/else chain below
         var puzzle = -1;  // ID of the puzzle
-        var score = 0;
+        var score = 0;  // user score
 
         let progressDiv = document.getElementById("progress")
         let progressText = document.getElementById("progress-text");
         let loader = document.getElementById("loader")
 
+        // makes the spin loader visible
         function startLoading() {
             loader.style.display = "block";
         }
 
+        // set the state panel to initializing
         function setInitializing() {
             loader.style.animation = "spin 1.5s linear infinite";
             loader.style.borderTop = "1vw solid #34db68";
@@ -54,6 +56,7 @@
             progressDiv.style.backgroundColor = "gainsboro";
         }
 
+        // set the state panel to waiting for task
         function setLoadingWaiting() {
             loader.style.animation = "spin 1.5s linear infinite";
             loader.style.borderTop = "1vw solid #3468db";
@@ -61,6 +64,7 @@
             progressDiv.style.backgroundColor = "gainsboro";
         }
 
+        // set the state panel to reading task
         function setLoadingReading() {
             loader.style.animation = "spin 1.5s linear infinite";
             loader.style.borderTop = "1vw solid #3468db";
@@ -68,14 +72,24 @@
             progressDiv.style.backgroundColor = "gainsboro";
         }
 
+        // set the state panel to thinking of solution
         function setLoadingThinking() {
-            loader.style.animation = "reverse-spin .9s linear infinite";
+            loader.style.animation = "reverse-spin 1s linear infinite";
             loader.style.borderTop = "1vw solid #db68db";
             progressText.innerHTML = "Solving task...";
             progressDiv.style.backgroundColor = "gainsboro";
             setImage(puzzle);  // set the display image to the puzzle image
         }
 
+        // set the state panel to found a solution
+        function setFoundSolution() {
+            loader.style.display = "none";  // hides the spin loader
+            progressText.innerHTML = "Task complete!";
+            progressDiv.style.backgroundColor = "palegreen";
+            setImage(puzzle + "_s");  // set the display image to the puzzle solution image
+        }
+
+        // set the state panel to moving to next task
         function setLoadingMoving() {
             loader.style.animation = "reverse-spin .9s linear infinite";
             loader.style.borderTop = "1vw solid #db68db";
@@ -83,71 +97,68 @@
             progressDiv.style.backgroundColor = "gainsboro";
         }
 
-        function setFoundSolution() {
-            loader.style.display = "none";
-            progressText.innerHTML = "Task complete!";
-            progressDiv.style.backgroundColor = "palegreen";
-            setImage(puzzle + "_s");  // set the display image to the puzzle solution image
-        }
-
+        // resets the state panel
         function resetBlock() {
             loader.style.display = "none";
             progressText.innerHTML = "Initializing..."
             progressDiv.style.backgroundColor = "gainsboro";
         }
 
+        // sets the image panel to a given image id (images located in static/img)
         function setImage(img_id) {
-            document.getElementById("puzzle").setAttribute("src", "static/img/hf_" + img_id + ".png")
+            if (score != 0) {
+                document.getElementById("puzzle").setAttribute("src", "static/img/hf_" + img_id + ".png")
+            }
+            else {
+                document.getElementById("puzzle").setAttribute("src", "")
+            }
         }
 
-        setInitializing();
+        setInitializing();  // set the display to initializing
 
         // regularly pull the current puzzle
         window.setInterval(() => {
             // get the current puzzle
-            fetch("/get_puzzle").then(response => response.json()).then((data) => {
-                let result = parseInt(data);  // puzzle responses from the server are in the form 102 where 1 is the puzzle state, and 01 is the puzzle ID
-                puzzle = result % 100;  // puzzle ID
-                state = parseInt(result / 100);
-            });
-            // update the progress panel according to the puzzle state
-            if (state == 0) {
-                console.log("reset");
-                resetBlock();
-            }
-            if (state == 1) {
-                startLoading();
-                setLoadingReading();
-            }
-            if (state == 2) {
-                startLoading();
-                setLoadingThinking();
-            }
-            if (state == 3) {
-                setFoundSolution();
-            }
-            if (state == 4) {
-                startLoading();
-                setLoadingMoving();
-            }
-            if (state == 5) {
-                startLoading();
-                setLoadingWaiting();
-            }
-            if (state == 6) {
-                startLoading();
-                setInitializing();
-            }
-            // update the image panel according to the image
-        }, 100);
-
-        // regularly pull the current score
-        window.setInterval(() => {
-            // get the current score
-            fetch("/get_score").then(response => response.json()).then((data) => {
-                score = parseFloat(data);  // get the score
+            fetch("/get_data").then(response => response.json()).then((data) => {
+                // get the user score
+                score = parseFloat(data.score);  // get the score
                 document.getElementById("score").innerHTML = "Score: " + score;
+                
+                // get the puzzle and state
+                let result = parseInt(data.puzzle);  // puzzle responses from the server are in the form 102 where 1 is the puzzle state, and 01 is the puzzle ID
+                puzzle = result % 100;  // puzzle ID
+                state = parseInt(result / 100);  // robot state
+
+                // update the progress panel according to the puzzle state
+                if (state == 0) {  // nothing happening, reset
+                    console.log("reset");
+                    resetBlock();
+                }
+                if (state == 1) {  // reading card
+                    startLoading();
+                    setLoadingReading();
+                }
+                if (state == 2) {  // thinking of solution
+                    startLoading();
+                    setLoadingThinking();
+                }
+                if (state == 3) {  // found solution
+                    setFoundSolution();
+                }
+                if (state == 4) {  // moving to next location
+                    startLoading();
+                    setLoadingMoving();
+                }
+                if (state == 5) {  // waiting for command
+                    startLoading();
+                    setLoadingWaiting();
+                }
+                if (state == 6) {  // initializing
+                    startLoading();
+                    setInitializing();
+                }
             });
-        }, 100)
+        }, 1000);
+
     </script>
 </html>

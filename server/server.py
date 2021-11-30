@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, json, render_template, request, jsonify
 import rospy
 from std_msgs.msg import String, Int32MultiArray
 import datetime
@@ -16,6 +16,7 @@ markers = ""  # raw list of currently visible markers, not used except for getti
 marker_table = [0,0,0,0,0,0,0,0,0,0]  # marker table denoting the number and position of each marker, ONLY UPDATES WITH SETS OF 10 MARKERS as opposed to the "markers" variable
 flag_force_reset = False  # flag for whether Fetch is in reset mode, when True skips through whatever state it is in
 game_round = 0  # flag for the game round
+penalties = 0  # number of penalties the user has gotten
 
 # publisher for admin action
 admin_publisher = rospy.Publisher("/twyk_admin", String, queue_size=10)
@@ -39,6 +40,22 @@ def add_log():
     message = request.args.get("message")
     log(message)
     return "success"
+
+# route to handle getting all data for the study
+@app.route("/get_data", methods=["GET"])
+def get_data():
+    data = {
+        "user_id": user_id,  # user ID
+        "round": game_round,  # game round
+        "state": state,  # robot state
+        "puzzle": puzzle,  # puzzle the robot is looking at
+        "score": score,  # user score for a round
+        "penalties": penalties,  # number of user penalties
+        "reset_flag": flag_force_reset,  # soft reset
+        "markers": markers,  # all visible markers
+        "marker_table": marker_table,  # only the latest set of 10 seen
+    }
+    return jsonify(data)
 
 # route to handle getting the current user ID
 @app.route("/get_user", methods=["GET"])
@@ -93,8 +110,10 @@ def get_score():
 @app.route("/reset_score", methods=["GET"])
 def reset_score():
     global score
+    global penalties
     score = 0
-    log("reset score")
+    penalties = 0
+    log("reset score and penalties")
     return "success"
 
 # route to handle adding to the current score
@@ -148,6 +167,25 @@ def set_round():
     if command == "0":
         game_round = 0
     log("setting round to " + str(game_round) + ", current score " + str(score))
+    return "success"
+
+# route to handle getting the current round
+@app.route("/get_penalties", methods=["GET"])
+def get_penalties():
+    return jsonify(penalties)
+
+# route to handle setting the current round
+@app.route("/set_penalties", methods=["GET"])
+def set_penalties():
+    global penalties
+    command = request.args.get("penalties")
+    if command == "+":
+        penalties += 1
+    if command == "-":
+        penalties -= 1
+    if command == "0":
+        penalties = 0
+    log("setting penalties to " + str(penalties))
     return "success"
 
 # route to handle getting the current marker table (limited to 10)

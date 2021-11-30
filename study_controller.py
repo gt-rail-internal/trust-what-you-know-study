@@ -51,12 +51,11 @@ joint_table = {
 }
 
 robot_thinking_times = {
-    "1": 15,
-    "2": 5,
-    "3": 17,
-    "4": 12,
-    "5": 30,
-    "6": 30,
+    "1": 20,  # spatial
+    "2": 4,  # raven
+    "3": 16,  # zen
+    "4": 12,  # math
+    "5": 8,  # sudoku
 }
 
 def init_arm():
@@ -83,26 +82,17 @@ def move_to_point(row, col):
 def sleep_score(seconds):
     while seconds > 1:
         time.sleep(1)
-        try:
-            requests.get("http://localhost:" + port + "/add_score", params={"score": 1})
-        except requests.exceptions.ConnectionError:
-                pass
+        set_server_var("add_score", {"score": 1})
         seconds -= 1
     time.sleep(seconds)
-    try:
-        requests.get("http://localhost:" + port + "/add_score", params={"score": seconds})
-    except requests.exceptions.ConnectionError:
-        pass
+    set_server_var("add_score", {"score": seconds})
     return
 
 
 # cycle_markers(): visits each marker that isn't 0, and runs the corresponding display/wait functions
 def cycle_markers(markers):
     # set the default task to "waiting for task"
-    try:
-        requests.get("http://localhost:" + port + "/set_puzzle", params={"puzzle": "500"})
-    except requests.exceptions.ConnectionError:
-        pass
+    set_server_var("set_puzzle", params={"puzzle": "500"})
 
     # visit each marker
     row = 0
@@ -114,34 +104,25 @@ def cycle_markers(markers):
             # if the marker is not 0, go to that marker
             if markers[index] != 0:
                 # move to the marker
-                try:
-                    requests.get("http://localhost:" + port + "/set_puzzle", params={"puzzle": "4" + str(markers[index])})
-                except requests.exceptions.ConnectionError:
-                    pass
+                set_server_var("set_puzzle", {"puzzle": "4" + str(markers[index])})
 
                 if flag_force_reset:
                     return
                 motion.move_arm_joints(joint_table[str(row)][str(col)])
 
                 # "read" the marker
-                #requests.get("http://localhost:" + port + "/set_puzzle", params={"puzzle": "1" + str(markers[index])})
+                #set_server_var("set_puzzle", {"puzzle": "1" + str(markers[index])})
                 #time.sleep(2)
 
                 # "think" of the solution
-                try:
-                    requests.get("http://localhost:" + port + "/set_puzzle", params={"puzzle": "2" + str(markers[index])})
-                except requests.exceptions.ConnectionError:
-                    pass
+                set_server_var("set_puzzle", {"puzzle": "2" + str(markers[index])})
                 if flag_force_reset:
                     return
                 sleep_score(robot_thinking_times[str(markers[index] // 10)])
                 
 
                 # complete!
-                try:
-                    requests.get("http://localhost:" + port + "/set_puzzle", params={"puzzle": "3" + str(markers[index])})
-                except requests.exceptions.ConnectionError:
-                    pass
+                set_server_var("set_puzzle", {"puzzle": "3" + str(markers[index])})
                 if flag_force_reset:
                     return
                 time.sleep(1)
@@ -149,9 +130,15 @@ def cycle_markers(markers):
             else:
                 pass
             index += 1
-    # increment the roumd
+    # increment the round if the round is not 0 (training round)
+    set_server_var("set_round", {"round": "+"})
+    return
+
+# set_server_var(): sends a get request to the server, intended for set variables (set_round, set_score, etc)
+def set_server_var(route, params={}):
+    route = route.replace("/", "")
     try:
-        requests.get("http://localhost:" + port + "/set_round", params={"round": "+"})
+        requests.get("http://localhost:" + port + "/" + route, params=params)
     except requests.exceptions.ConnectionError:
         pass
     return
@@ -165,19 +152,13 @@ def admin_control(data):
     # reset the arm
     if command == "reset":
         flag_force_reset = True
-        try:
-            requests.get("http://localhost:" + port + "/set_reset_flag", params={"reset_flag": "true"})
-        except requests.exceptions.ConnectionError:
-            pass
+        set_server_var("set_reset_flag", {"reset_flag": "true"})
         init_arm()
 
     # unreset the arm
     if command == "unreset":
         flag_force_reset = False
-        try:
-            requests.get("http://localhost:" + port + "/set_reset_flag", params={"reset_flag": "false"})
-        except requests.exceptions.ConnectionError:
-            pass
+        set_server_var("set_reset_flag", {"reset_flag": "false"})
 
     # run a marker cycle
     if command == "cycle":
@@ -195,6 +176,7 @@ def admin_control(data):
     
     # set the state to idling
     send_state("waiting for command")
+    return
 
 # init the topic subscriber
 def listener():
@@ -202,10 +184,8 @@ def listener():
 
 # send_state(): tells the server what state the robot is it
 def send_state(state):
-    try:    
-        requests.get("http://localhost:" + port + "/set_state", params={"state": state})
-    except requests.exceptions.ConnectionError:
-        pass
+    set_server_var("/set_state", params={"state": state})
+    return
 
 if __name__ == "__main__":    
     # set the state to init
@@ -216,10 +196,7 @@ if __name__ == "__main__":
     listener()
 
     # initialize the motion controller
-    try:
-        requests.get("http://localhost:" + port + "/set_puzzle", params={"puzzle": "600"})
-    except requests.exceptions.ConnectionError:
-        pass
+    set_server_var("set_puzzle", {"puzzle": "600"})
     motion.initialize_motion()
 
     # set to the initial position
