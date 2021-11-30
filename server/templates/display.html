@@ -145,7 +145,7 @@
         window.setInterval(() => {
             // get the current score
             fetch("/get_score").then(response => response.json()).then((data) => {
-                score = parseInt(data);  // get the score
+                score = parseFloat(data);  // get the score
                 document.getElementById("score").innerHTML = "Score: " + score;
             });
         }, 100)

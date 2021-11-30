@@ -50,6 +50,15 @@ joint_table = {
     #"home": [2.9771828651428223, -0.8701348869287109, -0.7354901095747559, 0.538868738205719, 1.7005119510925293, 2.56561325965271, 0, 0]
 }
 
+robot_thinking_times = {
+    "1": 15,
+    "2": 5,
+    "3": 17,
+    "4": 12,
+    "5": 30,
+    "6": 30,
+}
+
 def init_arm():
     # set the state to resetting arm
     send_state("resetting arm")
@@ -57,7 +66,7 @@ def init_arm():
     #joints = [2.9803242683410645, -1.5093436805688476, -0.4041502734541504, -1.129718886820984,-1.4648575595581055, 1.9692782062088012, 2.017528761517334, 0.6389203225610351]
     
     # init forward right near 0,1
-    joints = [2.9, -1, -0.7354901095747559, 0.538868738205719, 1.7005119510925293, 2.56561325965271, -0.7704813588745117, 3.090988412999878]
+    joints = [2.9, -.6, -1*math.pi/4, 0, 4*math.pi/8, 0, math.pi/4, 0]
     
     motion.move_arm_joints(joints)
     print("Arm location initialized")
@@ -125,7 +134,7 @@ def cycle_markers(markers):
                     pass
                 if flag_force_reset:
                     return
-                sleep_score(5)
+                sleep_score(robot_thinking_times[str(markers[index] // 10)])
                 
 
                 # complete!
@@ -180,6 +189,7 @@ def admin_control(data):
         send_state("cycling through markers")
         # cycle through the markers
         cycle_markers(markers)
+        send_state("completed cycling through markers, end of round")
         # return to the init position
         init_arm()
     

@@ -30,7 +30,7 @@ def index():
 def log(message):
     timestamp = (datetime.datetime.now() - datetime.datetime.utcfromtimestamp(0)).total_seconds()
     with open(os.path.join(os.path.dirname(__file__), "logs/" + user_id + ".log"), "a") as f:
-        f.write("[" + str(timestamp) + "]," + "(" + user_id + ")," + str(message) + "\n")
+        f.write("[" + str(timestamp) + "]," + "(" + user_id + "),{" + str(game_round) + "}," + str(message) + "\n")
     return
 
 # route to handle logging
@@ -147,6 +147,7 @@ def set_round():
         game_round -= 1
     if command == "0":
         game_round = 0
+    log("setting round to " + str(game_round) + ", current score " + str(score))
     return "success"
 
 # route to handle getting the current marker table (limited to 10)
