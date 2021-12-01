@@ -89,7 +89,7 @@
         let score = undefined;  // user score
         let userId = undefined;  // user ID for logging
         let round = undefined;  // game round
-        let penalities = undefined;  // user penalties
+        let penalties = undefined;  // user penalties
 
         fetch("/log?" + new URLSearchParams({"message": "opened admin page"}));
 
@@ -181,9 +181,9 @@
                 document.getElementById("state").innerHTML = "Fetch State: " + state;
 
                 // user score
-                score = parseFloat(data.score);  // get the score
+                score = round == 0 ? 0 : data.score + 20 * data.penalties;  // get the score
                 document.getElementById("score").innerHTML = "Score: " + score;
-
+    
                 // penalties
                 penalties = data.penalties;  // set the global variable
                 document.getElementById("penalties").innerHTML = "Penalties: " + penalties;

@@ -176,12 +176,15 @@ def set_round():
     if command == "+":
         game_round += 1
         score = 0
+        penalties = 0
     if command == "-":
         game_round -= 1
         score = 0
+        penalties = 0
     if command == "0":
         game_round = 0
         score = 0
+        penalties = 0
     log("setting round to " + str(game_round) + ", current score " + str(score))
     return "success"
 

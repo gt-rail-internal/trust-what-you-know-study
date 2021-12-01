@@ -38,6 +38,8 @@
         var state = -1;  // robot state, see the if/else chain below
         var puzzle = -1;  // ID of the puzzle
         var score = 0;  // user score
+        var penalties = 0;  // user penalties
+        var game_round = 0;
 
         let progressDiv = document.getElementById("progress")
         let progressText = document.getElementById("progress-text");
@@ -120,8 +122,11 @@
         window.setInterval(() => {
             // get the current puzzle
             fetch("/get_data").then(response => response.json()).then((data) => {
+                // get the game round
+                game_round = data.round
+                
                 // get the user score
-                score = parseFloat(data.score);  // get the score
+                score = data.round == 0 ? 0 : parseFloat(data.score) + 20 * parseInt(data.penalties);  // get the score
                 document.getElementById("score").innerHTML = "Score: " + score;
                 
                 // get the puzzle and state
