@@ -129,6 +129,9 @@
         // move to the next round
         function nextRound() {
             console.log("Moving to next round")
+            if (round == 0) {
+                fetch("/training_flag?flag=true")
+            }
             fetch("/set_round?" + new URLSearchParams({round: "+"}))
         }
 

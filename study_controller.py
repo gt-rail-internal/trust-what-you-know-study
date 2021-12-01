@@ -56,6 +56,7 @@ robot_thinking_times = {
     "3": 16,  # zen
     "4": 12,  # math
     "5": 8,  # sudoku
+    "6": 8,  # sudoku 11
 }
 
 def init_arm():
@@ -130,7 +131,7 @@ def cycle_markers(markers):
             else:
                 pass
             index += 1
-    # increment the round if the round is not 0 (training round)
+    # increment the round
     set_server_var("set_round", {"round": "+"})
     return
 

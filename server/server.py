@@ -17,6 +17,7 @@ marker_table = [0,0,0,0,0,0,0,0,0,0]  # marker table denoting the number and pos
 flag_force_reset = False  # flag for whether Fetch is in reset mode, when True skips through whatever state it is in
 game_round = 0  # flag for the game round
 penalties = 0  # number of penalties the user has gotten
+training_done = False  # flag for whether training is complete
 
 # publisher for admin action
 admin_publisher = rospy.Publisher("/twyk_admin", String, queue_size=10)
@@ -72,6 +73,7 @@ def set_user():
     if user_id != _user_id:
         user_id = _user_id
         game_round = 0
+        training_done = False
     log("set user ID to " + user_id)
     return "success"
 
@@ -155,17 +157,31 @@ def set_markers():
 def get_round():
     return jsonify(game_round)
 
+# route to set the training flag
+@app.route("/training_flag", methods=["GET"])
+def set_training_flag():
+    global training_done
+    training_done = False if request.args.get("flag") == "false" else True
+    return "success"
+
 # route to handle setting the current round
 @app.route("/set_round", methods=["GET"])
 def set_round():
     global game_round
+    global score
     command = request.args.get("round")
+    if not training_done:  # don't change round until training is done
+        return "success"
+
     if command == "+":
         game_round += 1
+        score = 0
     if command == "-":
         game_round -= 1
+        score = 0
     if command == "0":
         game_round = 0
+        score = 0
     log("setting round to " + str(game_round) + ", current score " + str(score))
     return "success"
 
