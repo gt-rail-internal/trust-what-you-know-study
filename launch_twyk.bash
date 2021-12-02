@@ -26,8 +26,11 @@ sleep 1
 # Terminal 3
 gnome-terminal --tab -- bash -c "${SCRIPT_STUDY}"
 
-# Firefox admin
+# Firefox google forms
 firefox --new-window https://docs.google.com/forms/d/e/1FAIpQLSenPlvRary8AOlOjV1utXl7GDbFfCjC159l6srm9wSaihKAUg/viewform &
+firefox --new-tab https://forms.gle/ScrzJz3VZZje5UoA7
+
+# Firefox admin
 firefox --new-window 127.0.0.1:5000/admin &
 
 # Firefox display

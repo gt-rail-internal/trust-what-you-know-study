@@ -132,7 +132,7 @@ def cycle_markers(markers):
                 pass
             index += 1
     # increment the round
-    set_server_var("set_round", {"round": "+"})
+    #set_server_var("set_round", {"round": "+"})
     return
 
 # set_server_var(): sends a get request to the server, intended for set variables (set_round, set_score, etc)
