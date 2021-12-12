@@ -1,6 +1,6 @@
 from flask import Flask, json, render_template, request, jsonify
-import rospy
-from std_msgs.msg import String, Int32MultiArray
+#import rospy
+#from std_msgs.msg import String, Int32MultiArray
 import datetime
 import io
 import os
@@ -20,7 +20,7 @@ penalties = 0  # number of penalties the user has gotten
 training_done = False  # flag for whether training is complete
 
 # publisher for admin action
-admin_publisher = rospy.Publisher("/twyk_admin", String, queue_size=10)
+#admin_publisher = rospy.Publisher("/twyk_admin", String, queue_size=10)
 
 # route to handle the display page
 @app.route("/", methods=["GET"])
@@ -228,19 +228,19 @@ def admin_control():
     
     # action: reset Fetch to the init position (defined in study_controller.py)
     if action == "reset":
-        admin_publisher.publish("reset")
+        #admin_publisher.publish("reset")
         log("published reset")
         return "success"
 
     # action: unreset Fetch
     if action == "unreset":
-        admin_publisher.publish("unreset")
+        #admin_publisher.publish("unreset")
         log("published unreset")
         return "success"
 
     # action: cycle through the markers
     if action == "cycle":
-        admin_publisher.publish("cycle")
+        #admin_publisher.publish("cycle")
         log("published cycle")
         return "success"
 
@@ -259,9 +259,9 @@ def process_markers_array(data):
     return
 
 # listener for marker array
-markers_subscriber = rospy.Subscriber("/markers", Int32MultiArray, process_markers_array)
+#markers_subscriber = rospy.Subscriber("/markers", Int32MultiArray, process_markers_array)
 
 # start the server
-rospy.init_node('twyk_server')
-app.run(debug=True, port=5000)
-rospy.spin()
+#rospy.init_node('twyk_server')
+app.run(port=5000)
+#rospy.spin()
